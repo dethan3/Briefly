@@ -1,0 +1,7 @@
+interface:
+  display_name: "Subtitle Briefing"
+  short_description: "Turn raw subtitles into structured briefings"
+  default_prompt: "Use $subtitle-briefing to normalize subtitle files and turn the cleaned transcript into a structured Chinese briefing."
+
+policy:
+  allow_implicit_invocation: true

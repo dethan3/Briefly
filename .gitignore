@@ -1,0 +1,16 @@
+.codex
+.DS_Store
+__pycache__/
+*.py[cod]
+
+/raw/*
+!/raw/.gitkeep
+
+/normalized/*
+!/normalized/.gitkeep
+
+/summaries/*
+!/summaries/.gitkeep
+
+/artifacts/*
+!/artifacts/.gitkeep

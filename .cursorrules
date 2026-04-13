@@ -1,0 +1,20 @@
+This repository is a reusable subtitle-briefing skill package.
+
+Read `SKILL.md` first.
+Read `references/output-contract.md` when writing summaries.
+Read `references/meta-schema.md` only if `raw/<basename>.meta.json` is present or needs to be created.
+
+Default workflow:
+1. Inspect `raw/` for subtitle or transcript files.
+2. Normalize before analysis:
+   `python3 scripts/normalize_subtitles.py raw --output-dir normalized`
+3. Use `normalized/<basename>.clean.txt` as the main analysis input.
+4. Use `normalized/<basename>.segments.json` for quotes, timestamps, and attribution hints.
+5. Write final summaries to `summaries/<basename>.md`.
+
+Rules:
+- Default summary language is Chinese.
+- Reconstruct arguments by logic, not subtitle order.
+- Separate fact, forecast, and opinion.
+- Do not fabricate named speaker attribution.
+- If identity is unclear, summarize by viewpoint clusters such as question, answer, interjection, supporting view, or opposing view.
