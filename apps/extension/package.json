@@ -1,0 +1,11 @@
+{
+  "name": "@briefly/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser-native YouTube transcript reader PoC for Briefly.",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --check src/content.js && node --check src/page-bridge.js && node --test test/*.test.mjs"
+  }
+}

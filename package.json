@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "packageManager": "pnpm@10.15.0",
   "scripts": {
-    "build": "pnpm --filter @briefly/core build",
-    "test": "pnpm --filter @briefly/core test"
+    "build": "pnpm --filter @briefly/core build && pnpm --filter @briefly/extension build",
+    "test": "pnpm --filter @briefly/core test && pnpm --filter @briefly/extension test",
+    "build:core": "pnpm --filter @briefly/core build",
+    "build:extension": "pnpm --filter @briefly/extension build"
   }
 }
