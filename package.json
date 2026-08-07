@@ -1,0 +1,10 @@
+{
+  "name": "briefly",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "build": "pnpm --filter @briefly/core build",
+    "test": "pnpm --filter @briefly/core test"
+  }
+}
