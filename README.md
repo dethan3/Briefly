@@ -1,188 +1,260 @@
-# Subtitle Briefing
+# Briefly
 
 [中文说明 / Chinese README](./README.zh-CN.md)
 
-Subtitle Briefing is a reusable, agent-neutral skill package for turning long-form subtitles and transcripts into structured briefing documents.
+**Turn long YouTube videos into clean, readable, searchable transcripts.**
 
-It is designed for podcast interviews, panel discussions, technical talks, and political or business conversations where the raw source usually arrives as `.srt`, `.vtt`, `.txt`, or transcript exports.
+Briefly is a browser-native transcript reader for long-form YouTube content such as podcasts, interviews, lectures, panels, and technical talks.
 
-## What It Does
+Instead of treating captions as a pile of timestamped fragments, Briefly cleans and restructures the existing YouTube transcript into something you can actually read, search, copy, and trace back to the original video.
 
-- Normalizes raw subtitles before analysis
-- Removes timestamps, cue numbers, and markup from model-facing text
-- Preserves a traceable segment map in JSON
-- Reconstructs fragmented dialogue into coherent arguments
-- Extracts numeric signals, conflict lines, and actionable takeaways
-- Produces briefing-ready Markdown summaries
+> Current status: **Extension Alpha / integration validation**
 
-## Why Normalize First
+The core and Chrome extension PoC are implemented. The next milestone is validating caption retrieval across real YouTube videos before building the public Web/SEO product.
 
-Raw subtitles are noisy:
+## What Briefly Does Today
 
-- timestamps consume context
-- line breaks split sentences unnaturally
-- adjacent turns may be merged poorly
-- many files do not include speaker labels
+On a YouTube watch page, the Chrome extension can:
 
-The normalizer converts those files into:
+- Detect the current video, including YouTube SPA navigation
+- Discover existing YouTube caption tracks
+- Switch between available caption languages
+- Fetch timed transcript data in the browser
+- Normalize fragmented captions with `@briefly/core`
+- Remove common caption noise and duplicate fragments
+- Preserve timestamps and source traceability
+- Search the cleaned transcript locally
+- Click a timestamp to seek the current YouTube video
+- Copy the cleaned transcript
 
-- `normalized/<basename>.clean.txt`
-- `normalized/<basename>.segments.json`
+No backend, account, AI model, audio download, or ASR service is required for the current transcript flow.
 
-`clean.txt` is the model-facing input.  
-`segments.json` is the traceable sidecar for quotes, timestamps, and turn-level hints.
+## Product Principle
 
-## Repository Layout
+Briefly is **Transcript First**, not AI First.
 
 ```text
-.
-├── .cursorrules
-├── SKILL.md
-├── AGENTS.md
-├── CLAUDE.md
-├── GEMINI.md
-├── OPENCLAW.md
-├── README.md
-├── README.zh-CN.md
-├── agents/
-│   └── openai.yaml
-├── scripts/
-│   └── normalize_subtitles.py
-├── references/
-│   ├── output-contract.md
-│   └── meta-schema.md
-├── raw/
-├── normalized/
-├── summaries/
-└── artifacts/
+YouTube video
+    ↓
+Existing captions
+    ↓
+Briefly Core
+    ↓
+Clean Transcript
+    ↓
+Read · Search · Jump · Copy
 ```
 
-## Quick Start
+AI briefing, source-grounded summaries, and a public SEO site are planned later, after the basic transcript path is proven reliable.
 
-1. Put subtitle or transcript files into `raw/`
-2. Run:
+## Install the Chrome Extension (Developer Alpha)
+
+The extension is not yet published to the Chrome Web Store. Install it locally as an unpacked extension.
+
+### Requirements
+
+- Node.js 20+
+- pnpm 10+
+- Google Chrome or another Chromium browser with Manifest V3 support
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/dethan3/Briefly.git
+cd Briefly
+```
+
+### 2. Install dependencies
+
+```bash
+pnpm install
+```
+
+### 3. Build and test
+
+```bash
+pnpm build
+pnpm test
+```
+
+The extension build output is created at:
+
+```text
+apps/extension/dist
+```
+
+### 4. Load it into Chrome
+
+1. Open `chrome://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked**
+4. Select `apps/extension/dist`
+5. Open a YouTube video that has captions
+
+You should see a **Briefly** button near the bottom-right of the page.
+
+## How to Use It
+
+1. Open a YouTube video with manual or auto-generated captions.
+2. Click **Briefly**.
+3. Briefly reads the available caption tracks from the current YouTube player.
+4. Select a language if multiple tracks are available.
+5. Read the cleaned transcript in the right-side drawer.
+6. Search for a word or phrase using the transcript search field.
+7. Click a timestamp to jump the YouTube player to that point.
+8. Click **Copy** to copy the cleaned transcript.
+
+## Alpha Validation Checklist
+
+Before treating the extension as a releasable product, validate it against real YouTube pages.
+
+Recommended test cases:
+
+- A video with manually uploaded captions
+- A video with YouTube auto-generated captions
+- A video with multiple caption languages
+- A long podcast/interview (1+ hour)
+- Switching from one YouTube video to another without a full page reload
+- A video with no captions
+
+For each case, verify:
+
+- Caption tracks are detected
+- The correct language is loaded
+- Transcript text is not empty or obviously duplicated
+- Search returns the expected segments
+- Timestamp clicking seeks the current video
+- Copy returns the cleaned transcript
+- The extension recovers correctly after YouTube SPA navigation
+
+## Architecture
+
+Briefly is organized as a TypeScript-first monorepo.
+
+```text
+Briefly/
+├── apps/
+│   └── extension/          # Chrome MV3 extension PoC
+├── packages/
+│   └── core/               # Browser-native transcript engine
+├── scripts/
+│   └── normalize_subtitles.py  # Legacy/reference Python implementation
+├── references/
+├── SKILL.md
+└── package.json
+```
+
+### `@briefly/core`
+
+The core is intentionally runtime-agnostic:
+
+- No network access
+- No filesystem dependency
+- No DOM dependency
+- No runtime dependencies
+
+It can run in:
+
+- Chrome extensions
+- Browser-side Web apps
+- Node.js
+
+Current responsibilities include:
+
+- Parse SRT / VTT / TXT / Markdown transcripts
+- Normalize caption text
+- Remove common noise and leading fillers
+- Deduplicate and merge fragmented cues
+- Preserve timestamps and source indices
+- Infer lightweight turn/role hints
+- Search transcripts locally
+- Export clean text, Markdown, and JSON
+
+### YouTube Source Adapter
+
+YouTube-specific logic is kept outside `@briefly/core`.
+
+The extension uses two Manifest V3 execution worlds:
+
+- `page-bridge.js` runs in `MAIN` to read YouTube player caption metadata and request the signed caption URL.
+- `content.js` runs in the isolated extension world and owns the Briefly UI and transcript processing.
+
+This keeps YouTube-specific, undocumented behavior isolated from the reusable transcript engine.
+
+## Current Limitations
+
+This is an Alpha, not a Chrome Web Store release.
+
+- Only videos with an existing YouTube caption track are supported
+- No audio transcription / Whisper fallback yet
+- YouTube player internals are undocumented and may change
+- Caption retrieval still needs broader real-browser validation
+- The current side drawer is a functional PoC, not final product UI
+- No transcript history or persistence yet
+- No public Web/SEO application yet
+- No AI Briefing UI yet
+
+## Roadmap
+
+### 1. Extension Alpha validation — **current**
+
+Validate caption retrieval and Reader behavior across real YouTube videos.
+
+### 2. Reader productization
+
+Improve reading layout, loading/error states, search UX, original-vs-clean comparison, and export options.
+
+### 3. Web / SEO tools
+
+Build the public acquisition layer around low-cost tools such as:
+
+- YouTube Transcript
+- Subtitle Cleaner
+- SRT to TXT
+- VTT to TXT
+- Remove Subtitle Timestamps
+
+### 4. Source-grounded Briefing
+
+Add optional AI briefing where claims link back to transcript segments and YouTube timestamps.
+
+### 5. Chrome Web Store release
+
+Package, polish, document privacy behavior, and publish the extension after real-world stability is proven.
+
+## Legacy Subtitle Briefing Skill
+
+Briefly started as an agent-neutral subtitle briefing Skill. That workflow is still retained for existing users and agent runtimes.
+
+Relevant files:
+
+- [SKILL.md](./SKILL.md)
+- [AGENTS.md](./AGENTS.md)
+- [CLAUDE.md](./CLAUDE.md)
+- [GEMINI.md](./GEMINI.md)
+- [OPENCLAW.md](./OPENCLAW.md)
+- [references/output-contract.md](./references/output-contract.md)
+
+The original Python normalizer also remains available:
 
 ```bash
 python3 scripts/normalize_subtitles.py raw --output-dir normalized
 ```
 
-3. Use `SKILL.md` plus `references/output-contract.md` to generate a summary into `summaries/`
+It is currently kept as a reference implementation while the TypeScript core becomes the product source of truth.
 
-## Core Inputs and Outputs
+## Development
 
-Input formats:
-
-- `.srt`
-- `.vtt`
-- `.txt`
-- `.md`
-- optional `raw/<basename>.meta.json`
-
-Output formats:
-
-- `normalized/<basename>.clean.txt`
-- `normalized/<basename>.segments.json`
-- `summaries/<basename>.md`
-
-## Speaker Attribution Reality
-
-Pure subtitle files often do not contain reliable speaker names.
-
-This repo therefore supports three attribution levels:
-
-1. Explicit speaker labels  
-   Best case. Use named speakers directly.
-2. Turn-level inference  
-   The normalizer detects explicit `>>` boundaries and adds `role_hint`, `turn_id`, and `explicit_turn`.
-3. Viewpoint-level downgrade  
-   When names are unavailable, summarize by `question / answer / interjection` or `supporting / opposing` viewpoint clusters.
-
-Do not claim exact named attribution unless the source or metadata supports it.
-
-## Optional Metadata
-
-If needed, add `raw/<basename>.meta.json` to stabilize:
-
-- title
-- host names
-- guest names
-- primary guest
-- aliases
-- topic hint
-
-See [references/meta-schema.md](./references/meta-schema.md).
-
-## Agent Entry Points
-
-This repo uses multiple entry files so different agent runtimes can consume the same skill package:
-
-- [SKILL.md](./SKILL.md): canonical skill workflow
-- [AGENTS.md](./AGENTS.md): generic project instructions for agents that look for `AGENTS.md`
-- [CLAUDE.md](./CLAUDE.md): Claude Code entry file
-- [GEMINI.md](./GEMINI.md): entry file for `GEMINI.md`-compatible runtimes
-- [OPENCLAW.md](./OPENCLAW.md): explicit adapter for OpenClaw setups
-- [.cursorrules](./.cursorrules): minimal Cursor-compatible repository instructions
-- [agents/openai.yaml](./agents/openai.yaml): OpenAI skill UI metadata for skill-aware runtimes
-
-The source of truth is still `SKILL.md` plus the files under `scripts/` and `references/`.
-
-## Agent Integration
-
-### Codex and other skill-aware agents
-
-Use [SKILL.md](./SKILL.md) as the canonical entry.  
-If the runtime supports repo-local skills, point it at this repository directly.
-
-### Claude Code
-
-Claude Code should use [CLAUDE.md](./CLAUDE.md) as the runtime entry file and `SKILL.md` as the workflow definition.
-
-Typical setup:
+Run all current builds and tests from the repository root:
 
 ```bash
-git clone <this-repo> ~/.claude/skills/subtitle-briefing
+pnpm install
+pnpm build
+pnpm test
 ```
 
-### OpenClaw and other `AGENTS.md` runtimes
+Extension-specific documentation is available at [apps/extension/README.md](./apps/extension/README.md).
 
-OpenClaw-style runtimes should use [AGENTS.md](./AGENTS.md) as the entry file and then follow `SKILL.md`.
+## License
 
-Typical setup:
-
-```bash
-git clone <this-repo> /workspace/<channel>/skills/subtitle-briefing
-```
-
-### Gemini CLI and other `GEMINI.md` runtimes
-
-Use [GEMINI.md](./GEMINI.md) as the runtime entry file, then follow `SKILL.md`.
-
-### Cursor and other `.cursorrules` runtimes
-
-Use [.cursorrules](./.cursorrules) as the repository instruction shim. It intentionally stays thin and points back to `SKILL.md`.
-
-### OpenAI skill-aware runtimes
-
-Use [agents/openai.yaml](./agents/openai.yaml) as the UI metadata layer and [SKILL.md](./SKILL.md) as the canonical workflow.
-
-## Dependencies
-
-Current normalizer requirements:
-
-- Python 3
-- standard library only
-
-No virtual environment is required for the current implementation.
-
-## Limitations
-
-- No audio-based diarization yet
-- No guaranteed person-level attribution from unlabeled subtitles
-- No automatic external fact-checking for numbers quoted in transcripts
-
-## Development Notes
-
-- Keep repo-root docs agent-neutral
-- Keep runtime-specific instructions thin and derivative
-- Do not check user transcripts or generated summaries into version control by default
-- `.gitignore` keeps `raw/`, `normalized/`, `summaries/`, and `artifacts/` clean while preserving the folder structure
+A project license has not been finalized yet. Do not assume redistribution terms beyond what is explicitly provided in this repository.
